@@ -36,7 +36,7 @@ input[type=text]:focus{border-color:var(--accent)}
 #hud{display:flex;justify-content:space-between;align-items:center;font-size:15px;font-weight:700;gap:6px;flex-wrap:wrap}
 #hud span{background:#0007;padding:6px 11px;border-radius:999px;white-space:nowrap}
 #lives{color:#ff5d8f}
-#qwrap{flex:1;display:flex;flex-direction:column;gap:10px;min-height:0}
+#qwrap{flex:1;display:flex;flex-direction:column;gap:10px;min-height:0;position:relative}
 #stage3d{flex:1;position:relative;border-radius:20px;overflow:hidden;background:transparent;min-height:200px;border:1px solid #ffffff22}
 #stage3d canvas{display:block}
 #questionCard{position:absolute;left:50%;bottom:10px;transform:translateX(-50%);z-index:5;text-align:center;background:#000b;padding:14px 24px;border-radius:18px;box-shadow:0 8px 30px #000a;min-width:min(85%,340px)}
@@ -57,7 +57,7 @@ table{width:100%;border-collapse:collapse;font-size:15px}
 td,th{padding:8px;border-bottom:1px solid #ffffff15;text-align:center}
 th{opacity:.6;font-size:12px;text-transform:uppercase}
 .topbar{display:flex;justify-content:space-between;align-items:center}
-#toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(90px);background:#000e;padding:12px 22px;border-radius:99px;font-weight:700;transition:.3s;z-index:99;white-space:nowrap;box-shadow:0 6px 20px #000a}
+#toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(90px);background:#000e;padding:12px 22px;border-radius:999px;font-weight:700;transition:.3s;z-index:99;white-space:nowrap;box-shadow:0 6px 20px #000a}
 #toast.show{transform:translateX(-50%)}
 /* Logo */
 #logoBox{display:flex;justify-content:center;align-items:center;gap:10px}
@@ -81,8 +81,8 @@ body[data-theme=arabalar]{--accent:#c77dff}
 #overlay.show{display:flex}
 #overlay .big{font-size:clamp(40px,12vw,70px);font-weight:900}
 
-/* ==== temaya özel hareketli ikonlar (arka plan koşucuları) ==== */
-.runner{position:absolute;z-index:1;pointer-events:none;filter:drop-shadow(0 3px 6px #0007);animation-fill-mode:forwards,none;white-space:nowrap}
+/* ==== temaya özel hareketli ikonlar (soru kartının üst kısmında, asla altta kalmaz) ==== */
+.runner{position:absolute;z-index:2;pointer-events:none;filter:drop-shadow(0 3px 6px #0007);animation-fill-mode:forwards,none;white-space:nowrap}
 @keyframes runLR{from{left:-80px}to{left:calc(100% + 10px)}}
 @keyframes runRL{from{right:-80px}to{right:calc(100% + 10px)}}
 @keyframes bob{0%,100%{transform:translateY(0) rotate(-7deg)}50%{transform:translateY(-13px) rotate(7deg)}}
@@ -107,7 +107,7 @@ body[data-theme=arabalar]{--accent:#c77dff}
     <div class="topbar"><span id="totalStars" style="font-weight:700"></span><button class="btn ghost small" id="btnMuteTop">🔊</button></div>
     <div id="logoBox"><canvas id="logoCanvas" width="184" height="184"></canvas><span class="logoTxt">MATH</span></div>
     <h2>3D Matematik Macerası — Yıldızları Topla, Kupayı Kazan! ⭐🏆</h2>
-    <div id="goalInfo">🎯 <b>Amaç:</b> Her seviyede 5 yıldız doldur → <b>Kupa kazan!</b> Yanlış cevap = <b>1 can kaybı</b> (3 canın var). Canlar biterse macera yeniden başlar.</div>
+    <div id="goalInfo">🎯 <b>Amaç:</b> Her seviyede 5 yıldız doldur → <b>Kupa kazan!</b> Yanlış cevap = <b>1 can kaybı</b> (3 canın var). Seri ateş ve patron sorularıyla puanını katla!</div>
     <div class="card">
       <label class="lbl">Adın (isteğe bağlı)</label>
       <input type="text" id="inpName" maxlength="14" placeholder="Kahramanın adı...">
@@ -129,6 +129,12 @@ body[data-theme=arabalar]{--accent:#c77dff}
       <label class="lbl">3D Oyun Dünyası</label>
       <div class="row" id="themeRow"></div>
       <div id="themePreview"></div>
+    </div>
+    <div class="card">
+      <label class="lbl">⚡ Ekstra Modlar</label>
+      <div class="row">
+        <div class="opt" id="optTimer" onclick="toggleTimerMod()" style="flex:1">⏳ Zaman Yarışı (10s)</div>
+      </div>
     </div>
     <button class="btn" id="btnStart" style="font-size:20px;padding:18px">🚀 Maceraya Başla!</button>
     <div class="row">
@@ -155,7 +161,11 @@ body[data-theme=arabalar]{--accent:#c77dff}
 
   <!-- SKOR -->
   <div class="screen" id="scr-board">
-    <h1>🏆 Skor Tablosu</h1>
+    <h1>🏆 Skor Tablosu & Rozetler</h1>
+    <div class="card" style="margin-bottom:8px">
+      <label class="lbl">🏅 Başarı Sandığı (Rozetlerin)</label>
+      <div id="badgeContainer" style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;font-size:13px;padding:4px"></div>
+    </div>
     <div class="card" style="flex:1;overflow:auto"><table id="boardTable"></table></div>
     <div class="row">
       <button class="btn ghost" id="btnMyScores">👤 Benim Skorlarım</button>
@@ -165,17 +175,16 @@ body[data-theme=arabalar]{--accent:#c77dff}
 </div>
 
 <div id="introPop"><div class="introCard">
-  <h1 style="font-size:36px">🧮 MATH</h1>
-  <h2>3D Matematik Macerası'na Hoş Geldin! 🎉</h2>
+  <h1 style="font-size:32px">🧮 MATH</h1>
+  <h2>Matematik Macerasına Hoş Geldin! 🎉</h2>
   <ol class="steps">
-    <li>1️⃣ İsteğine göre <b>BİR veya BİRDEN FAZLA</b> işlem seç: ➕ ➖ ✖️ ➗</li>
-    <li>2️⃣ <b>SINIF SEVİYENİ</b> seç 🎓</li>
-    <li>3️⃣ <b>3D OYUN DÜNYANI</b> seç: 🚀 Uzay, 🌾 Köy, 🏎️ Yarış, 🧱 Lego, ⛷️ Kayak...</li>
-    <li>4️⃣ İstersen <b>ADINI</b> yaz — puanını skor tablosunda görebilirsin! ✍️</li>
-    <li>5️⃣ <b>🚀 Maceraya Başla</b>'ya bas! Her seviyede 5 ⭐ topla, 🏆 kupayı kazan! Yanlış cevap = 1 can 💔 (3 canın var)</li>
+    <li>1️⃣ <b>İşlemini ve sınıfını seç!</b> ➕➖✖️➗</li>
+    <li>2️⃣ <b>Oyun dünyanı seç</b> (Her dünyanın özgün melodisi var 🎵)</li>
+    <li>3️⃣ <b>Seri yap (Streak)</b> ile puanını katla, <b>Boss sorusunu</b> geç ve 🏆 kupayı kap!</li>
+    <li>4️⃣ <b>3 canın var 💔</b>, hızlı olursan ekstra yıldız kazanırsın!</li>
   </ol>
   <div class="credit">HAZIRLAYAN:<br><b>YILDIRAY HOCA</b><br><small>(MATEMATİK ÖĞRETMENİ)</small></div>
-  <button class="btn" id="introBtn" style="font-size:18px;padding:16px">Anladım, Başlayalım! ▶</button>
+  <button class="btn" id="introBtn" style="font-size:18px;padding:16px">Başlayalım! ▶</button>
 </div></div>
 <div id="overlay"><div class="big" id="ovTitle"></div><div id="ovText" style="font-size:18px;max-width:400px"></div><button class="btn" id="ovBtn" style="font-size:18px;padding:16px 30px">Devam ▶</button></div>
 <div id="toast"></div>
@@ -189,7 +198,7 @@ function tone(f,d,type="sine",v=.2,when=0,slide=0){ const a=ac(),o=a.createOscil
   o.type=type;o.frequency.setValueAtTime(f,a.currentTime+when); if(slide)o.frequency.exponentialRampToValueAtTime(Math.max(30,slide),a.currentTime+when+d);
   g.gain.setValueAtTime(.0001,a.currentTime+when); g.gain.exponentialRampToValueAtTime(v,a.currentTime+when+.015); g.gain.exponentialRampToValueAtTime(.001,a.currentTime+when+d);
   o.connect(g).connect(a.destination); o.start(a.currentTime+when); o.stop(a.currentTime+when+d+.05); }
-/* eğlenceli sesler */
+
 const SFX={
   click:()=>tone(700,.06,"square",.1,0,900),
   correct:()=>{tone(660,.1,"triangle",.25);tone(880,.1,"triangle",.25,.08);tone(1175,.2,"triangle",.28,.16)},
@@ -199,67 +208,146 @@ const SFX={
   levelup:()=>{[523,659,784,1047].forEach((f,i)=>tone(f,.16,"triangle",.25,i*.09))},
   trophy:()=>{[523,659,784,1047,784,1047,1319,1568].forEach((f,i)=>tone(f,.2,"square",.16,i*.11));SFX.yay()},
   coin:()=>{tone(1200,.06,"square",.18);tone(1600,.14,"square",.18,.06)},
-  splash:()=>tone(300,.25,"sine",.14,0,70)
+  splash:()=>tone(300,.25,"sine",.14,0,70),
+  boss:()=>{[300,400,500,600,800].forEach((f,i)=>tone(f,.15,"sawtooth",.2,i*.08))}
 };
-/* neşeli müzikler — tema ölçekleri, zıp zıp melodi */
-const SCALES={racing:[220,262,330,440,523],space:[262,330,392,523,659],fishing:[294,370,440,587,740],football:[262,330,392,494,587],volleyball:[294,349,440,587,698],ski:[330,415,494,659,831],lego:[262,330,392,494,622],kitchen:[330,392,494,659,784],village:[294,370,440,587,698],arabalar:[247,311,415,494,622]};
+
+/* ================= HER ALANIN KENDİNE HAS ÖZGÜN MELODİLERİ (DOMUZ YOK) ================= */
+const THEME_MELODIES = {
+  racing:    { iv: 140, wave: "sawtooth", notes: [220, 294, 330, 440, 523, 440, 330, 294] },
+  space:     { iv: 320, wave: "sine",     notes: [262, 330, 392, 523, 659, 784, 659, 523] },
+  fishing:   { iv: 380, wave: "triangle", notes: [294, 370, 440, 587, 440, 370, 294, 220], splash: true },
+  football:  { iv: 190, wave: "square",   notes: [262, 392, 523, 587, 523, 392, 330, 392] },
+  volleyball:{ iv: 230, wave: "triangle", notes: [294, 440, 587, 698, 587, 440, 349, 440] },
+  ski:       { iv: 290, wave: "sine",     notes: [330, 494, 659, 831, 659, 494, 415, 494] },
+  lego:      { iv: 210, wave: "square",   notes: [262, 330, 392, 494, 392, 330, 262, 196] },
+  kitchen:   { iv: 270, wave: "triangle", notes: [330, 392, 659, 523, 392, 494, 659, 784] },
+  village:   { iv: 330, wave: "triangle", notes: [294, 440, 370, 587, 440, 370, 294, 330] },
+  arabalar:  { iv: 160, wave: "square",   notes: [247, 311, 415, 494, 622, 494, 415, 311] }
+};
+
 let mStep=0;
-/* her oyun alanının kendi müzik karakteri: tempo, enstrüman ve melodi örüntüsü */
-const MUSICCFG={
-  racing:{iv:170,wave:"sawtooth",vol:.06,pat:[0,2,4,2,5,4,2,0]},     /* hızlı yarış motoru */
-  arabalar:{iv:185,wave:"square",vol:.05,pat:[0,1,2,3,4,3,2,1]},      /* ritmik klakson */
-  space:{iv:380,wave:"sine",vol:.09,pat:[0,2,4,2,1,2,4,3]},           /* rüya gibi uzay */
-  fishing:{iv:420,wave:"triangle",vol:.08,pat:[0,1,2,1,3,2,1,0],splash:true}, /* sakin dalga */
-  football:{iv:220,wave:"square",vol:.055,pat:[0,3,2,4,0,3,2,1]},     /* coşkulu tribün */
-  volleyball:{iv:260,wave:"triangle",vol:.07,pat:[0,2,1,3,2,4,3,1]},  /* zıp zıp saha */
-  ski:{iv:330,wave:"sine",vol:.085,pat:[0,1,3,2,4,3,5,4]},            /* serin ve akıcı */
-  lego:{iv:240,wave:"square",vol:.05,pat:[0,2,1,3,0,4,2,3]},          /* oyuncak kurma */
-  kitchen:{iv:300,wave:"triangle",vol:.08,pat:[0,2,3,1,4,3,2,0]},     /* neşeli ocak ritmi */
-  village:{iv:350,wave:"triangle",vol:.08,pat:[0,1,2,3,2,1,0,2]}      /* huzurlu çiftlik */
-};
-function startMusic(theme){ stopMusic(); if(!musicOn)return;
-  const sc=SCALES[theme]||SCALES.space, cfg=MUSICCFG[theme]||MUSICCFG.space;
-  musicTimer=setInterval(()=>{ if(!musicOn)return; const i=mStep++;
-    const f=sc[cfg.pat[i%cfg.pat.length]%(sc.length)];
-    if(i%2===0)tone(f,.24,cfg.wave,cfg.vol);
-    if(i%8===0)tone(f/2,.45,"sine",.09);
-    if(i%8===6)tone(f*1.5,.12,"square",.045);
-    if(cfg.splash&&i%16===14)SFX.splash();
-  },cfg.iv); }
+function startMusic(theme){ 
+  stopMusic(); 
+  if(!musicOn)return;
+  const cfg = THEME_MELODIES[theme] || THEME_MELODIES.space;
+  mStep = 0;
+  musicTimer = setInterval(()=>{ 
+    if(!musicOn)return; 
+    const note = cfg.notes[mStep % cfg.notes.length];
+    tone(note, cfg.iv * 0.0016, cfg.wave, 0.07);
+    if(mStep % 4 === 0) tone(note * 0.5, cfg.iv * 0.002, "sine", 0.05);
+    if(cfg.splash && mStep % 16 === 14) SFX.splash();
+    mStep++;
+  }, cfg.iv); 
+}
 function stopMusic(){ if(musicTimer){clearInterval(musicTimer);musicTimer=null} }
 
-/* ================= VERİ ================= */
+/* ================= VERİ VE OYUN DURUMU ================= */
 const THEMES=[["racing","🏎️ Yarış"],["space","🚀 Uzay"],["fishing","🎣 Balık"],["football","⚽ Futbol"],["volleyball","🏐 Voleybol"],["ski","⛷️ Kayak"],["lego","🧱 Lego"],["kitchen","🍳 Mutfak"],["village","🌾 Köy"],["arabalar","🚗 Garaj"]];
 const GRADES=["1. Sınıf","2. Sınıf","3. Sınıf","4. Sınıf","5. Sınıf","Ortaokul","Lise"];
-const state={name:"",ops:new Set(["+"]),grade:0,theme:"space",level:1,score:0,stars:0,totalStars:+(localStorage.getItem("math_stars")||0),streak:0,lives:3,answered:0,correct:0,current:null,locked:false,cups:+(localStorage.getItem("math_cups")||0)};
+const state={
+  name:"", ops:new Set(["+"]), grade:0, theme:"space", level:1, score:0, stars:0,
+  totalStars:+(localStorage.getItem("math_stars")||0), streak:0, lives:3, answered:0, correct:0,
+  current:null, locked:false, cups:+(localStorage.getItem("math_cups")||0),
+  timerMode:false, timerInterval:null, timeLeft:10, isBossStage:false,
+  badges:JSON.parse(localStorage.getItem("math_badges")||"[]")
+};
 const $=id=>document.getElementById(id);
 function toast(m){const t=$("toast");t.textContent=m;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),2400);}
 function overlay(title,text,btn,cb){ $("ovTitle").innerHTML=title; $("ovText").innerHTML=text; $("ovBtn").textContent=btn;
   $("overlay").classList.add("show"); $("ovBtn").onclick=()=>{$("overlay").classList.remove("show"); cb&&cb();}; }
-function saveScore(){ let b=JSON.parse(localStorage.getItem("math_board")||"[]");
+function saveScore(){ 
+  let b=JSON.parse(localStorage.getItem("math_board")||"[]");
   b.push({name:state.name||"Anonim",score:state.score,level:state.level,cups:state.cups,date:new Date().toLocaleDateString("tr-TR")});
   b.sort((a,b)=>b.score-a.score); localStorage.setItem("math_board",JSON.stringify(b.slice(0,50)));
-  const mine=JSON.parse(localStorage.getItem("math_mine")||"[]"); mine.push({score:state.score,level:state.level,date:new Date().toLocaleString("tr-TR")});
-  localStorage.setItem("math_mine",JSON.stringify(mine.slice(-30))); }
+  let mine=JSON.parse(localStorage.getItem("math_mine")||"[]"); mine.push({score:state.score,level:state.level,date:new Date().toLocaleString("tr-TR")});
+  localStorage.setItem("math_mine",JSON.stringify(mine.slice(-30))); 
+}
 
-/* ================= SORU ÜRETİMİ ================= */
+/* Rozet Kontrol ve Ekleme Sistemi */
+function checkBadges(action){
+  let newBadge = null;
+  if(action === 'first_correct' && !state.badges.includes('🌟 İlk Adım')) newBadge = '🌟 İlk Adım';
+  if(state.correct >= 10 && !state.badges.includes('🧮 10 İşlem Ustası')) newBadge = '🧮 10 İşlem Ustası';
+  if(state.streak >= 5 && !state.badges.includes('🔥 Ateş Pahası (5 Streak)')) newBadge = '🔥 Ateş Pahası (5 Streak)';
+  if(state.cups >= 1 && !state.badges.includes('🏆 İlk Kupa Avcısı')) newBadge = '🏆 İlk Kupa Avcısı';
+
+  if(newBadge){
+    state.badges.push(newBadge);
+    localStorage.setItem("math_badges", JSON.stringify(state.badges));
+    toast("🏅 Yeni Rozet Kazanıldı: " + newBadge);
+  }
+}
+
+/* ================= SORU VE BOSS ÜRETİMİ ================= */
 function rnd(a,b){return Math.floor(Math.random()*(b-a+1))+a;}
 function genQuestion(){
+  // Her 5. yıldızda (stars === 4 iken sonraki soru) Boss Stage aktif olur
+  if(state.stars === 4){
+    state.isBossStage = true;
+    SFX.boss();
+    toast("⚠️ PATRON SORUSU (BOSS STAGE)!");
+  } else {
+    state.isBossStage = false;
+  }
+
   const g=state.grade, lv=state.level, op=[...state.ops][rnd(0,state.ops.size-1)];
   let a,b,ans, diff=Math.min(1+g*0.35+lv*0.35,10);
-  if(op==="+"){a=rnd(1,Math.round(5+diff*3));b=rnd(1,Math.round(5+diff*3));ans=a+b;}
-  else if(op==="-"){a=rnd(2,Math.round(8+diff*4));b=rnd(1,a);ans=a-b;}
-  else if(op==="×"){const m=Math.max(2,Math.round(2+diff*(g>=2?1.4:0.5)));a=rnd(2,m+2);b=rnd(2,m+2);ans=a*b;}
-  else{b=rnd(2,Math.max(3,Math.round(2+diff)));ans=rnd(2,Math.max(3,Math.round(2+diff)));a=b*ans;}
+  
+  if(state.isBossStage){
+    // Boss sorusu için biraz daha zor aralıklar ve karışık hissettiren kurgu
+    a=rnd(5, Math.round(15+diff*4));
+    b=rnd(3, Math.round(10+diff*3));
+    if(op==="+") ans=a+b;
+    else if(op==="-") { if(a<b){let t=a;a=b;b=t;} ans=a-b; }
+    else if(op==="×") { a=rnd(3,12); b=rnd(3,12); ans=a*b; }
+    else { b=rnd(2,9); ans=rnd(3,10); a=b*ans; }
+  } else {
+    if(op==="+"){a=rnd(1,Math.round(5+diff*3));b=rnd(1,Math.round(5+diff*3));ans=a+b;}
+    else if(op==="-"){a=rnd(2,Math.round(8+diff*4));b=rnd(1,a);ans=a-b;}
+    else if(op==="×"){const m=Math.max(2,Math.round(2+diff*(g>=2?1.4:0.5)));a=rnd(2,m+2);b=rnd(2,m+2);ans=a*b;}
+    else{b=rnd(2,Math.max(3,Math.round(2+diff)));ans=rnd(2,Math.max(3,Math.round(2+diff)));a=b*ans;}
+  }
+
   const set=new Set([ans]); let guard=0;
   while(set.size<4&&guard++<60){const d=ans+rnd(-Math.max(2,Math.round(diff*1.5)),Math.max(2,Math.round(diff*1.5))); if(d>=0&&!set.has(d))set.add(d);}
   state.current={a,b,op,ans,opts:[...set].sort(()=>Math.random()-.5)};
+
+  if(state.timerMode) startTimer();
 }
+
+function startTimer(){
+  clearInterval(state.timerInterval);
+  state.timeLeft = 10;
+  state.timerInterval = setInterval(()=>{
+    state.timeLeft--;
+    if(state.timeLeft <= 0){
+      clearInterval(state.timerInterval);
+      // Süre bittiğinde otomatik yanlış sayılır
+      handleTimeOut();
+    }
+  }, 1000);
+}
+
+function handleTimeOut(){
+  if(state.locked) return;
+  state.locked = true;
+  state.streak = 0;
+  state.lives--;
+  SFX.wrong();
+  toast("⏳ Süre bitti! 1 can gitti 💔");
+  updateHUD();
+  setTimeout(()=>{
+    if(state.lives <= 0){ gameOver(); return; }
+    renderQ();
+  }, 1500);
+}
+
 const SYMBOL={"+":"toplarsın","-":"çıkarırsın","×":"çarparsın","÷":"bölersin"};
 
 /* ================= 3D MOTOR (Three.js) ================= */
-let renderer,scene,camera,themeGroup,confetti=[],stars3d=[],heroObj=null,clock;
-const TCOLORS={racing:0xff6b35,space:0x8ecae6,fishing:0x74c69d,football:0xa7f070,volleyball:0xffcf99,ski:0xbde0fe,lego:0xffd60a,kitchen:0xffb3c6,village:0xcde77f,arabalar:0xc77dff};
+let renderer,scene,camera,confetti=[],stars3d=[],clock;
 function init3D(){
   renderer=new THREE.WebGLRenderer({canvas:$("bg3d"),antialias:true,alpha:true});
   renderer.setPixelRatio(Math.min(devicePixelRatio,2));
@@ -268,13 +356,13 @@ function init3D(){
   scene.add(new THREE.AmbientLight(0xffffff,.5));
   const dl=new THREE.DirectionalLight(0xffffff,.9); dl.position.set(3,6,4); scene.add(dl);
   const pl=new THREE.PointLight(0xf72585,1.2,30); pl.position.set(-4,3,3); scene.add(pl);
-  // yıldız alanı
+  
   const sg=new THREE.BufferGeometry(),sp=[];
   for(let i=0;i<400;i++)sp.push((Math.random()-.5)*50,(Math.random()-.5)*30,-Math.random()*25-2);
   sg.setAttribute("position",new THREE.Float32BufferAttribute(sp,3));
   stars3d=new THREE.Points(sg,new THREE.PointsMaterial({color:0xffffff,size:.08}));
   scene.add(stars3d);
-  // konfeti havuzu
+
   for(let i=0;i<120;i++){const m=new THREE.Mesh(new THREE.PlaneGeometry(.14,.14),
     new THREE.MeshBasicMaterial({color:[0xffd166,0xf72585,0x4cc9f0,0x06d6a0][i%4],side:THREE.DoubleSide}));
     m.visible=false; scene.add(m); confetti.push({m,v:new THREE.Vector3(),r:new THREE.Vector3(),life:0});}
@@ -282,46 +370,9 @@ function init3D(){
 }
 function resize3D(){const w=innerWidth,h=innerHeight;renderer.setSize(w,h);camera.aspect=w/h;camera.updateProjectionMatrix();}
 addEventListener("resize",resize3D);
-function heroMesh(theme){
-  const g=new THREE.Group(), c=TCOLORS[theme]||0x8ecae6, mat=()=>new THREE.MeshStandardMaterial({color:c,metalness:.4,roughness:.35});
-  if(theme==="racing"||theme==="arabalar"){ // araba
-    const b=new THREE.Mesh(new THREE.BoxGeometry(1.8,.5,.9),mat()); b.position.y=.45; g.add(b);
-    const t=new THREE.Mesh(new THREE.BoxGeometry(.9,.4,.8),mat()); t.position.set(-.1,.9,0); g.add(t);
-    [[-.6,.55],[.6,.55],[-.6,-.55],[.6,-.55]].forEach(p=>{const w=new THREE.Mesh(new THREE.CylinderGeometry(.26,.26,.2,16),new THREE.MeshStandardMaterial({color:0x222222}));w.rotation.x=Math.PI/2;w.position.set(p[0],.26,p[1]);g.add(w);});
-  } else if(theme==="space"){ // roket
-    const b=new THREE.Mesh(new THREE.ConeGeometry(.5,1.6,20),mat()); g.add(b);
-    const fin=new THREE.Mesh(new THREE.CylinderGeometry(.5,.5,.9,20),new THREE.MeshStandardMaterial({color:0xeeeeee,metalness:.6,roughness:.3})); fin.position.y=-1.1; g.add(fin);
-    const fl=new THREE.Mesh(new THREE.ConeGeometry(.25,.7,12),new THREE.MeshBasicMaterial({color:0xffa500})); fl.position.y=-1.9; fl.name="flame"; g.add(fl);
-  } else if(theme==="fishing"){ // şamandıra
-    const b=new THREE.Mesh(new THREE.SphereGeometry(.6,20,16),new THREE.MeshStandardMaterial({color:0xff3333})); g.add(b);
-    const s=new THREE.Mesh(new THREE.CylinderGeometry(.03,.03,1.4,8),new THREE.MeshStandardMaterial({color:0x8b5a2b})); s.position.y=1; g.add(s);
-  } else if(theme==="football"||theme==="volleyball"){ // top
-    g.add(new THREE.Mesh(new THREE.SphereGeometry(.8,24,18),new THREE.MeshStandardMaterial({color:theme==="football"?0xffffff:c,metalness:.2,roughness:.5})));
-    const p=new THREE.Mesh(new THREE.SphereGeometry(.82,12,8),new THREE.MeshBasicMaterial({color:0x111111,wireframe:true,transparent:true,opacity:.4})); g.add(p);
-  } else if(theme==="ski"){ // dağ+kayakçı basit
-    const m1=new THREE.Mesh(new THREE.ConeGeometry(1.6,2.4,4),mat()); m1.position.set(-1.6,-.4,0); m1.rotation.y=Math.PI/4; g.add(m1);
-    const m2=new THREE.Mesh(new THREE.ConeGeometry(1.2,1.8,4),mat()); m2.position.set(1.4,-.7,-.5); m2.rotation.y=Math.PI/4; g.add(m2);
-    const sk=new THREE.Mesh(new THREE.BoxGeometry(.16,1,.16),new THREE.MeshStandardMaterial({color:0x222222})); sk.position.set(0,.3,.6); g.add(sk);
-  } else if(theme==="lego"){ // lego blokları
-    [[0,0,0,.9],[1.1,.0,.2,.6],[-.9,.7,-.3,.7]].forEach(p=>{const b=new THREE.Mesh(new THREE.BoxGeometry(p[3],p[3]*.6,p[3]),mat());b.position.set(p[0],p[1],p[2]);g.add(b);
-      const k=new THREE.Mesh(new THREE.CylinderGeometry(p[3]*.18,p[3]*.18,.14,12),mat()); k.position.set(p[0],p[1]+p[3]*.37,p[2]); g.add(k);});
-  } else if(theme==="kitchen"){ // tava
-    const p=new THREE.Mesh(new THREE.CylinderGeometry(.8,.8,.14,24),mat()); g.add(p);
-    const h=new THREE.Mesh(new THREE.BoxGeometry(1,.1,.14),mat()); h.position.x=1.1; g.add(h);
-  } else { // köy: ev + ağaç
-    const hb=new THREE.Mesh(new THREE.BoxGeometry(1.2,1,1),new THREE.MeshStandardMaterial({color:0xd4a373})); g.add(hb);
-    const rf=new THREE.Mesh(new THREE.ConeGeometry(1,.8,4),new THREE.MeshStandardMaterial({color:0xbc6c25})); rf.position.y=.9; rf.rotation.y=Math.PI/4; g.add(rf);
-    const tr=new THREE.Mesh(new THREE.ConeGeometry(.5,1.1,10),new THREE.MeshStandardMaterial({color:0x40916c})); tr.position.set(1.4,.3,0); g.add(tr);
-  }
-  return g;
-}
-function setTheme3D(theme){
-  /* Büyük 3D geometrik şekiller kaldırıldı — oyun alanı artık sadece
-     temaya özgü koşan ikonlarla (startRunners) canlanıyor. */
-  if(themeGroup){scene.remove(themeGroup); themeGroup=null;}
-  heroObj=null;
-}
-const CELEB={racing:["🏁","🏎️","⭐"],space:["🚀","⭐","🪐"],fishing:["🐟","⭐","🎣"],football:["⚽","⭐","🥅"],volleyball:["🏐","⭐","🏖️"],ski:["❄️","⭐","⛷️"],lego:["🧱","⭐","🤖"],kitchen:["🍰","⭐","🍳"],village:["🌾","⭐","🐔"],arabalar:["🚗","⭐","🔧"]};
+function setTheme3D(theme){}
+
+const CELEB={racing:["🏁","🏎️","⭐"],space:["🚀","⭐","🪐"],fishing:["🐟","⭐","🎣"],football:["⚽","⭐","🥅"],volleyball:["🏐","⭐","🏖️"],ski:["❄️","⭐","⛷️"],lego:["🧱","⭐","🤖"],kitchen:["🍰","⭐","🍳"],village:["🌾","⭐","🌻"],arabalar:["🚗","⭐","🔧"]};
 function floatEmo(good){
   const host=$("stage3d"); if(!host)return;
   const list=good?(CELEB[state.theme]||["🎉","⭐"]):["💦","🌧️"];
@@ -340,17 +391,13 @@ function tick3D(){
   requestAnimationFrame(tick3D);
   const dt=Math.min(clock.getDelta(),.05), t=clock.elapsedTime;
   stars3d.rotation.y=t*.02;
-  if(heroObj){ heroObj.rotation.y+=dt*.8; heroObj.position.y=Math.sin(t*2)*.15+(state._hop||0);
-    if(state._hop>0)state._hop=Math.max(0,state._hop-dt*2.5);
-    const fl=heroObj.getObjectByName&&heroObj.getObjectByName("flame");
-    if(fl)fl.scale.setScalar(.8+Math.random()*.4);
-  }
   confetti.forEach(c=>{ if(c.life<=0)return; c.life-=dt; c.v.y-=dt*4;
     c.m.position.addScaledVector(c.v,dt); c.m.rotation.x+=c.r.x*dt; c.m.rotation.y+=c.r.y*dt;
     if(c.life<=0)c.m.visible=false; });
   camera.position.x=Math.sin(t*.3)*.4; camera.lookAt(0,.4,0);
   renderer.render(scene,camera);
 }
+
 /* 3D LOGO */
 function drawLogo(){
   const cv=$("logoCanvas"),ctx=cv.getContext("2d"),W=cv.width,H=cv.height; let a=0;
@@ -367,13 +414,12 @@ function drawLogo(){
     ctx.restore(); requestAnimationFrame(loop); })();
 }
 
-/* tema ikon önizlemeleri */
-const THEME_ICONS={racing:["🏎️","🏁","🏆","⛽","🛞"],space:["🚀","🪐","⭐","🌎","👾"],fishing:["🎣","🐟","🐠","🦈","🌊"],football:["⚽","🥅","🏟️","👟","🎽"],volleyball:["🏐","🥅","🏖️","👐","🩳"],ski:["⛷️","🎿","🏔️","❄️","🧤"],lego:["🧱","🤖","🏰","🚗","🦖"],kitchen:["🍳","🥘","🍰","👨‍🍳","🥄"],village:["🌾","🐔","🚜","🏡","🐮"],arabalar:["🚗","🚙","🔧","🅿️","🛞"]};
+const THEME_ICONS={racing:["🏎️","🏁","🏆","⛽","🛞"],space:["🚀","🪐","⭐","🌎","👾"],fishing:["🎣","🐟","🐠","🦈","🌊"],football:["⚽","🥅","🏟️","👟","🎽"],volleyball:["🏐","🥅","🏖️","👐","🩳"],ski:["⛷️","🎿","🏔️","❄️","🧤"],lego:["🧱","🤖","🏰","🚗","🦖"],kitchen:["🍳","🥘","🍰","👨‍🍳","🥄"],village:["🌾","🌻","🚜","🏡","🐮"],arabalar:["🚗","🚙","🔧","🅿️","🛞"]};
 function setPreview(theme){ $("themePreview").innerHTML=(THEME_ICONS[theme]||[]).map((e,i)=>
   `<span style="animation-delay:${i*0.13}s">${e}</span>`).join(""); }
 setPreview("space");
 
-/* ==== TEMA KOŞUCULARI — oyun arka planında sürekli hareket eden ikonlar ==== */
+/* ==== TEMA KOŞUCULARI (Soru kartının üst kısmında, asla altta kalmaz) ==== */
 const THEME_RUNNERS={
   racing:{icons:["🏎️","🏎️","💨","🛞","🏁","⛽"],rev:false,spin:false},
   arabalar:{icons:["🚗","🚙","🚕","💨","🛞","🔧"],rev:false,spin:false},
@@ -384,7 +430,7 @@ const THEME_RUNNERS={
   ski:{icons:["⛷️","🏂","🎿","❄️","🏔️","🧤"],rev:true,spin:false},
   lego:{icons:["🧱","🧱","🧱","🤖","🚗","🏰"],rev:false,spin:false},
   kitchen:{icons:["🍳","🥘","🍲","🧑‍🍳","🔥","🍰"],rev:false,spin:false},
-  village:{icons:["🐄","🐔","🐑","🐖","🐕","🚜","🌾"],rev:false,spin:false}
+  village:{icons:["🐮","🐔","🐑","🌻","🐕","🚜","🌾"],rev:false,spin:false}
 };
 let runnerTimer=null;
 function startRunners(theme){
@@ -396,13 +442,14 @@ function startRunners(theme){
     const s=document.createElement("span");
     s.className="runner";
     s.textContent=cfg.icons[rnd(0,cfg.icons.length-1)];
-    const size=rnd(26,54), dur=rnd(4,9), y=rnd(3,46);
+    const size=rnd(24,38), dur=rnd(5,9);
+    const y=rnd(15,45);
     s.style.fontSize=size+"px";
-    s.style.bottom=y+"%";
+    s.style.top=y+"%";
     const run=cfg.rev?"runRL":"runLR";
     const bobK=cfg.spin?"spinBob":"bob";
-    s.style.left=cfg.rev?"auto":"-80px";
-    s.style.right=cfg.rev?"-80px":"auto";
+    s.style.left=cfg.rev?"auto":"-70px";
+    s.style.right=cfg.rev?"-70px":"auto";
     s.style.animationName=run+","+bobK;
     s.style.animationDuration=dur+"s,"+(dur/2.2)+"s";
     s.style.animationTimingFunction="linear,ease-in-out";
@@ -419,31 +466,73 @@ function stopRunners(){
 /* ================= OYUN AKIŞI ================= */
 function show(id){document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));$(id).classList.add("active");}
 function updateHUD(){
-  $("hudLevel").textContent="Lv "+state.level; $("hudScore").textContent="⭐ "+state.score;
-  $("hudStreak").textContent="🔥 "+state.streak; $("lives").textContent="❤️".repeat(state.lives)+"🖤".repeat(Math.max(0,3-state.lives));
+  $("hudLevel").textContent="Lv "+state.level + (state.isBossStage ? " ⚠️ BOSS" : ""); 
+  $("hudScore").textContent="⭐ "+state.score;
+  $("hudStreak").textContent="🔥 "+state.streak; 
+  $("lives").textContent="❤️".repeat(state.lives)+"🖤".repeat(Math.max(0,3-state.lives));
   $("starfill").style.width=(state.stars/5*100)+"%";
 }
+
 function renderQ(){
   state.locked=false; genQuestion(); const c=state.current;
-  $("q").innerHTML=`${c.a} <span style="color:var(--accent)">${c.op}</span> ${c.b} <small>= ?</small>`;
+  
+  // Boss aşamasında kartın arkasını hafif kırmızımsı / dikkat çekici yapalım
+  const qCard = $("questionCard");
+  if(state.isBossStage){
+    qCard.style.background = "#5a1818dd";
+    qCard.style.border = "2px solid #ff4d4d";
+  } else {
+    qCard.style.background = "#000b";
+    qCard.style.border = "none";
+  }
+
+  let timerTxt = state.timerMode ? ` <small style="color:var(--accent)">[⏱️ ${state.timeLeft}s]</small>` : "";
+  $("q").innerHTML=`${c.a} <span style="color:var(--accent)">${c.op}</span> ${c.b} <small>= ?</small>` + timerTxt;
   $("feedback").textContent="";
   $("answers").innerHTML=c.opts.map(o=>`<button class="ans" data-v="${o}">${o}</button>`).join("");
   document.querySelectorAll(".ans").forEach(b=>b.onclick=()=>answer(b,+b.dataset.v));
   updateHUD();
 }
+
 function answer(btn,v){
   if(state.locked)return; state.locked=true;
+  clearInterval(state.timerInterval);
   const c=state.current; state.answered++;
+  
   if(v===c.ans){
     btn.classList.add("correct"); SFX.correct(); state.correct++; state.streak++;
-    const pts=10*state.level+state.streak*2; state.score+=pts; state.stars++;
+    
+    // Seri Ateş (Streak) ve Kombo Çarpanı Bonusu
+    let multiplier = 1;
+    if(state.streak >= 5) multiplier = 3;
+    else if(state.streak >= 3) multiplier = 2;
+
+    let pts = (10 * state.level + state.streak * 2) * multiplier;
+    
+    // Zaman yarışı modunda hızlı cevap verdiyse ekstra puan
+    if(state.timerMode && state.timeLeft >= 6) {
+      pts += 15;
+      toast("⚡ Hızlı Cevap Bonus +15 Puan!");
+    }
+
+    state.score+=pts; state.stars++;
     state.totalStars++; localStorage.setItem("math_stars",state.totalStars);
+    
+    checkBadges('first_correct');
+
     state._hop=.6; burst3D(); floatEmo(true); SFX.coin();
+    
+    if(state.streak >= 3){
+      toast(`🔥 Süper Seri! ${multiplier}x Puan!`);
+    }
+
     $("feedback").innerHTML=`<span style="color:var(--good)">🎉 Süper! +${pts} puan • ${c.a} ${c.op} ${c.b} = ${c.ans}</span>`;
     updateHUD();
+    
     setTimeout(()=>{
       if(state.stars>=5){ // KUPA!
         state.cups++; localStorage.setItem("math_cups",state.cups);
+        checkBadges('cup');
         SFX.trophy(); burst3D();
         overlay("🏆 KUPA KAZANDIN!","Seviye "+state.level+" tamamlandı! Toplam kupan: <b>"+state.cups+"</b><br>Bonus: +100 puan 🎁","Sonraki Seviye ▶",()=>{
           state.level++; state.score+=100; state.stars=0; SFX.levelup(); toast("⬆️ Seviye "+state.level+" — sorular zorlaşıyor!"); renderQ(); });
@@ -452,10 +541,9 @@ function answer(btn,v){
       renderQ();
     },900);
   } else {
-    /* YANLIŞ: doğru cevap ekranda gösterilir, öyle geçilir */
     btn.classList.add("wrong"); SFX.wrong(); floatEmo(false); state.streak=0; state.lives--;
     document.querySelectorAll(".ans").forEach(b=>{ if(+b.dataset.v===c.ans)b.classList.add("reveal"); b.onclick=null; });
-    $("feedback").innerHTML=`<span style="color:var(--bad)">💡 Unutma: ${c.a} ${c.op} ${c.b} = <b style="font-size:1.25em">${c.ans}</b> — ${c.a} ile ${c.b}'i ${SYMBOL[c.op]}, ${c.ans} bulursun!</span>`;
+    $("feedback").innerHTML=`<span style="color:var(--bad)">💡 Unutma: ${c.a} ${c.op} ${c.b} = <b style="font-size:1.25em">${c.ans}</b></span>`;
     updateHUD();
     setTimeout(()=>{
       if(state.lives<=0){ gameOver(); return; }
@@ -463,20 +551,22 @@ function answer(btn,v){
     },2100);
   }
 }
+
 function gameOver(){
-  stopMusic(); SFX.lose(); saveScore();
+  stopMusic(); clearInterval(state.timerInterval); SFX.lose(); saveScore();
   overlay("💔 Macera Bitti...",state.name+" — Skorun: <b>⭐ "+state.score+"</b> • Ulaşılan seviye: <b>"+state.level+"</b><br>Kazanılan toplam yıldız: "+state.totalStars+" 🌟<br><small>Skorun kaydedildi. Tekrar dene, kupayı kazan!</small>","🔄 Tekrar Oyna",()=>{ stopRunners(); show("scr-menu"); refreshMenu(); startMusic(state.theme); });
 }
+
 function startGame(){
   state.name=$("inpName").value.trim(); state.level=1; state.score=0; state.stars=0; state.streak=0; state.lives=3; state.answered=0; state.correct=0;
   document.body.dataset.theme=state.theme; show("scr-game"); setTheme3D(state.theme);
   startRunners(state.theme);
   startMusic(state.theme); renderQ(); SFX.yay();
-  toast("🎯 5 yıldız = 🏆 Kupa! 3 hakkın var, iyi şanslar!");
+  toast("🎯 5 yıldız = 🏆 Kupa! Patron sorularına dikkat!");
 }
 function refreshMenu(){ $("totalStars").textContent="🌟 "+state.totalStars+" yıldız • 🏆 "+state.cups+" kupa"; }
 
-/* ================= SKOR TABLOSU ================= */
+/* ================= SKOR TABLOSU & ROZETLER ================= */
 function renderBoard(mine){
   let rows;
   if(mine){ rows=JSON.parse(localStorage.getItem("math_mine")||"[]").slice().reverse()
@@ -484,35 +574,82 @@ function renderBoard(mine){
   else { rows=JSON.parse(localStorage.getItem("math_board")||"[]").slice(0,10)
       .map((r,i)=>`<tr><td>${["🥇","🥈","🥉"][i]||i+1}</td><td>${r.name}</td><td>⭐ ${r.score}</td><td>Lv ${r.level} 🏆${r.cups||0}</td><td>${r.date}</td></tr>`).join(""); }
   $("boardTable").innerHTML=`<tr><th>#</th><th>İsim</th><th>Puan</th><th>Seviye/Kupa</th><th>Tarih</th></tr>`+(rows||`<tr><td colspan="5">Henüz skor yok — ilk sen ol! 🚀</td></tr>`);
+  
+  // Başarı sandığı rozetlerini yükle
+  const badgeBox = $("badgeContainer");
+  if(state.badges.length > 0){
+    badgeBox.innerHTML = state.badges.map(b => `<span style="background:#ffd16622;border:1px solid var(--accent);padding:4px 8px;border-radius:8px">${b}</span>`).join("");
+  } else {
+    badgeBox.innerHTML = "<span style='opacity:0.6'>Henüz rozet yok. Soruları çöz, rozetleri kap! 🎖️</span>";
+  }
 }
 
 /* ================= KURULUM ================= */
-function buildOpts(el,items,cb,def){ items.forEach((it,i)=>{ const d=document.createElement("div"); d.className="opt"+(i===def?" on":""); d.textContent=it[1]||it;
-  d.onclick=()=>{cb(it[0],d);SFX.click();}; el.appendChild(d); }); }
+function buildOpts(el,items,cb,def){ 
+  el.innerHTML = "";
+  items.forEach((it,i)=>{ 
+    const d=document.createElement("div"); 
+    d.className="opt"+(i===def?" on":""); 
+    d.textContent=Array.isArray(it)?it[1]:it;
+    const val=Array.isArray(it)?it[0]:i;
+    d.onclick=()=>{cb(val,d);SFX.click();}; 
+    el.appendChild(d); 
+  }); 
+}
+
 buildOpts($("gradeRow"),GRADES.map((g,i)=>[i,g]),(v,d)=>{state.grade=v;[...$("gradeRow").children].forEach(c=>c.classList.remove("on"));d.classList.add("on");},0);
-buildOpts($("themeRow"),THEMES,(v,d)=>{state.theme=v;[...$("themeRow").children].forEach(c=>c.classList.remove("on"));d.classList.add("on");setTheme3D(v);setPreview(v);},1);
+
+buildOpts($("themeRow"),THEMES,(v,d)=>{
+  state.theme=v;
+  [...$("themeRow").children].forEach(c=>c.classList.remove("on"));
+  d.classList.add("on");
+  setTheme3D(v);
+  setPreview(v);
+  startMusic(v);
+  if($("scr-game").classList.contains("active")) { startRunners(v); }
+},1);
+
+function toggleTimerMod(){
+  state.timerMode = !state.timerMode;
+  const btn = $("optTimer");
+  if(state.timerMode){
+    btn.classList.add("on");
+    toast("⏳ Zaman Yarışı Modu Açıldı (10 sn)!");
+  } else {
+    btn.classList.remove("on");
+    toast("⏳ Zaman Yarışı Kapatıldı.");
+  }
+  SFX.click();
+}
+
 document.querySelectorAll("#opsRow .opt").forEach(d=>d.onclick=()=>{ const op=d.dataset.op;
   if(state.ops.has(op)){ if(state.ops.size>1){state.ops.delete(op);d.classList.remove("on");} else toast("En az bir işlem seçili olmalı!"); }
   else{state.ops.add(op);d.classList.add("on");} SFX.click(); });
+
 $("btnStart").onclick=startGame;
 $("btnBoard").onclick=()=>{renderBoard(false);show("scr-board");SFX.click();};
 $("btnMyScores").onclick=()=>{renderBoard(true);SFX.click();};
 $("btnBack").onclick=()=>{show("scr-menu");refreshMenu();SFX.click();};
-$("btnQuit").onclick=()=>{ stopMusic(); stopRunners(); saveScore(); toast(`Skorun kaydedildi: ⭐ ${state.score}`); show("scr-menu"); refreshMenu(); startMusic(state.theme); };
-function toggleMute(){ musicOn=!musicOn; if(!musicOn)stopMusic(); else if($("scr-game").classList.contains("active"))startMusic(state.theme);
-  $("btnMute").textContent="🎵 Müzik: "+(musicOn?"Açık":"Kapalı"); $("btnMuteTop").textContent=musicOn?"🔊":"🔇"; toast(musicOn?"🎵 Müzik açıldı":"🔇 Müzik kapatıldı"); }
+$("btnQuit").onclick=()=>{ stopMusic(); clearInterval(state.timerInterval); saveScore(); toast(`Skorun kaydedildi: ⭐ ${state.score}`); show("scr-menu"); refreshMenu(); startMusic(state.theme); };
+
+function toggleMute(){ 
+  musicOn=!musicOn; 
+  if(!musicOn) stopMusic(); 
+  else startMusic(state.theme);
+  $("btnMute").textContent="🎵 Müzik: "+(musicOn?"Açık":"Kapalı"); 
+  $("btnMuteTop").textContent=musicOn?"🔊":"🔇"; 
+  toast(musicOn?"🎵 Müzik açıldı":"🔇 Müzik kapatıldı"); 
+}
 $("btnMute").onclick=toggleMute; $("btnMuteTop").onclick=toggleMute;
 
-/* PWA */
 const manifest={name:"MATH",short_name:"MATH",display:"standalone",orientation:"portrait",
   background_color:"#0d0d2b",theme_color:"#0d0d2b",start_url:".",
   icons:[{src:"data:image/svg+xml,"+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" rx="22" fill="#0d0d2b"/><text x="50" y="66" font-size="46" text-anchor="middle">🧮</text></svg>'),sizes:"any",type:"image/svg+xml"}]};
 const mLink=document.createElement("link"); mLink.rel="manifest"; mLink.href=URL.createObjectURL(new Blob([JSON.stringify(manifest)],{type:"application/json"})); document.head.appendChild(mLink);
 try{ navigator.serviceWorker.register(URL.createObjectURL(new Blob(["self.addEventListener('install',e=>self.skipWaiting());self.addEventListener('fetch',e=>{});"],{type:"text/javascript"}))).catch(()=>{}); }catch(e){}
 window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();window._pwa=e;toast("📲 'Ana Ekrana Ekle' ile uygulama gibi kur!");});
-document.addEventListener("click",()=>{ ac(); if(musicOn&&!musicTimer)startMusic("space"); },{once:true});
-/* açılış pop-up'ı kapanırken müzik başlar */
-$("introBtn").onclick=()=>{ $("introPop").remove(); ac(); if(musicOn)startMusic("space"); SFX.click(); };
+
+$("introBtn").onclick=()=>{ $("introPop").remove(); ac(); if(musicOn)startMusic(state.theme); SFX.click(); };
 
 init3D(); drawLogo(); setTheme3D("space"); refreshMenu();
 </script>
